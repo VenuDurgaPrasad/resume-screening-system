@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resume Analyzer Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI';
+            background: linear-gradient(to right,#667eea,#764ba2);
+            text-align: left;
+           
+        }
+        .container {
+            width:70%;
+            margin:auto;
+            background:white;
+            padding:20px;
+            margin-top:30px;
+            border-radius:10px;
+        }
+        textarea { width:100%; height:120px; }
+        button { padding:10px; margin-top:10px; }
+        canvas { margin-top:20px; }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>🚀 Resume Analyzer</h1>
+
+<form method="POST" enctype="multipart/form-data">
+<!-- <textarea name="resume" placeholder="Paste your resume here..."></textarea> -->
+<input type="file" name="file">
+<button type="submit">Analyze</button>
+</form>
+
+{% if prediction is not none %}
+
+<h2>Prediction Category: {{ prediction }}</h2>
+<p>ATS: {{ ats_score }}</p>
+<p>Keyword: {{ keyword }}</p>
+<p>Words: {{ word_count }}</p>
+
+<!-- SAFE DATA PASS -->
+<div id="chart-data"
+data-ats="{{ ats_score | default(0) }}"
+data-keyword="{{ keyword | default(0) }}"
+data-wordcount="{{ word_count | default(0) }}"
+data-skills='{{ skills | tojson }}'
+data-text='{{ resume_text | tojson }}'>
+</div>
+
+<h3>📊 Bar Graph Analysis</h3>
+<canvas id="barChart" height="120"></canvas>
+
+<h3>📊 Skills Frequency</h3>
+<canvas id="skillsChart" height="120"></canvas>
+
+{% endif %}
+
+</div>
+
+{% if prediction is not none %}
+<script>
+
+document.addEventListener("DOMContentLoaded", function() {
+
+const el = document.getElementById("chart-data");
+
+// SAFE READ
+const ats = Number(el.dataset.ats) || 0;
+const keyword = Number(el.dataset.keyword) || 0;
+const wordCount = Number(el.dataset.wordcount) || 0;
+const skills = JSON.parse(el.dataset.skills || "[]");
+const text = JSON.parse(el.dataset.text || "").toLowerCase();
+
+// 📊 MAIN BAR GRAPH
+new Chart(document.getElementById("barChart"), {
+    type: 'bar',
+    data: {
+        labels: ['ATS Score', 'Keyword Score', 'Word Count'],
+        datasets: [{
+            label: 'Resume Analysis',
+            data: [ats, keyword, wordCount],
+            backgroundColor: ['blue','green','orange']
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                suggestedMax: 100
+            }
+        }
+    }
+});
+
+// 📊 SKILLS BAR GRAPH
+const skillValues = skills.map(skill => {
+    try {
+        let regex = new RegExp(skill, "gi");
+        let count = (text.match(regex) || []).length;
+        return count;
+    } catch {
+        return 0;
+    }
+});
+
+new Chart(document.getElementById("skillsChart"), {
+    type: 'bar',
+    data: {
+        labels: skills,
+        datasets: [{
+            label: 'Skills Frequency',
+            data: skillValues,
+            backgroundColor: 'purple'
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+});
+</script>
+{% endif %}
+
+</body>
+</html>  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
